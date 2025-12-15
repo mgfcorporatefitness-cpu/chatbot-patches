@@ -1,0 +1,24 @@
+{
+    "version": "10.5.0",
+    "date": "2025-12-15",
+    "description": "MagicFit Chatbot Patches - Auto-Update",
+    "files": [
+        {
+            "path": "includes/mf-chat-handler.php",
+            "description": "Gestionnaire de chat avec options au lieu de transients"
+        },
+        {
+            "path": "includes/mf-scenarios-dashboard.php", 
+            "description": "Dashboard scénarios avec wp_kses_post"
+        },
+        {
+            "path": "includes/admin-auto-repair.php",
+            "description": "Auto-Repair v5.0 avec auto-update GitHub"
+        }
+    ],
+    "changelog": [
+        "v10.5.0 - Remplacement transients par options (évite Redis)",
+        "v10.5.0 - Correction sanitization boutons scénarios",
+        "v10.5.0 - Auto-Repair avec mise à jour GitHub instantanée"
+    ]
+}
