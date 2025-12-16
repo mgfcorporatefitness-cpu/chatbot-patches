@@ -1,16 +1,18 @@
 <?php
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
- * ║   MagicFit Chat Handler v10.1 - CONNECTÉ À LA BDD                           ║
+ * ║   MagicFit Chat Handler v10.2 - VARIABLES ÉTENDUES                          ║
  * ║                                                                              ║
  * ║   Toutes les réponses viennent de la base de données                        ║
  * ║   Modifications dans le Dashboard = Effet IMMÉDIAT                          ║
+ * ║                                                                              ║
+ * ║   v10.2 : Ajout {modes_paiement}, {activites}, {activites_liste}            ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  */
 
 if (!defined('ABSPATH')) exit;
 
-define('MF_HANDLER_VERSION', '10.1.0');
+define('MF_HANDLER_VERSION', '10.2.0');
 
 // ============================================
 // POINT D'ENTRÉE PRINCIPAL
@@ -960,6 +962,26 @@ function mf_generate_response_from_db($intention, $intention_data, $club = null)
         // Horaires
         $horaires = mf_build_horaires_text($club, $data);
         $response = str_replace('{horaires_semaine}', $horaires, $response);
+        
+        // v10.2 - Modes de paiement (depuis Gestion Clubs > Tarifs)
+        if (strpos($response, '{modes_paiement}') !== false) {
+            $modes_paiement = mf_get_formatted_payment_methods($club->id);
+            $response = str_replace('{modes_paiement}', $modes_paiement, $response);
+        }
+        
+        // v10.2 - Activités (depuis Gestion Clubs > Activités)
+        if (strpos($response, '{activites}') !== false) {
+            $activites = mf_get_formatted_activities($club->id, 'inline');
+            $response = str_replace('{activites}', $activites, $response);
+        }
+        if (strpos($response, '{activites_liste}') !== false) {
+            $activites = mf_get_formatted_activities($club->id, 'list');
+            $response = str_replace('{activites_liste}', $activites, $response);
+        }
+        if (strpos($response, '{activites_count}') !== false) {
+            $activites = mf_get_formatted_activities($club->id, 'count');
+            $response = str_replace('{activites_count}', $activites, $response);
+        }
     }
     
     // Ajouter les boutons
@@ -1529,3 +1551,121 @@ function mf_log_response($message, $response_data, $session_id) {
     }
 }
 
+// ============================================
+// v10.2 - FORMATER LES MODES DE PAIEMENT
+// ============================================
+
+function mf_get_formatted_payment_methods($club_id) {
+    // Labels des modes de paiement
+    $labels = array(
+        'cb' => '💳 Carte Bancaire',
+        'sepa' => '🏦 Prélèvement SEPA',
+        'cheque' => '📝 Chèque',
+        'especes' => '💵 Espèces',
+        'amex' => '💎 American Express',
+        'alma' => '⏳ Alma (plusieurs fois)',
+        'cheque_vacances' => '🏖️ Chèque Vacances',
+        'ancv' => '🎾 Chèque Sport ANCV',
+        'coupon_sport' => '🎫 Coupon Sport',
+        'pass_sport' => '🏃 Pass\'Sport',
+    );
+    
+    // Récupérer les modes depuis la BDD
+    if (!function_exists('mf_get_club_data')) {
+        return '💳 CB • 🏦 SEPA • 📝 Chèque • 💵 Espèces';
+    }
+    
+    $payments_json = mf_get_club_data($club_id, 'payment_methods', '["cb","sepa"]');
+    $payments = json_decode($payments_json, true);
+    
+    if (!is_array($payments) || empty($payments)) {
+        $payments = array('cb', 'sepa');
+    }
+    
+    $formatted = array();
+    foreach ($payments as $key) {
+        if (isset($labels[$key])) {
+            $formatted[] = $labels[$key];
+        }
+    }
+    
+    return !empty($formatted) ? implode(' • ', $formatted) : '💳 CB • 🏦 SEPA';
+}
+
+// ============================================
+// v10.2 - FORMATER LES ACTIVITÉS
+// ============================================
+
+function mf_get_formatted_activities($club_id, $format = 'inline') {
+    // Labels des activités
+    $labels = array(
+        'cours_collectifs' => '🏃 Cours collectifs',
+        'musculation' => '💪 Musculation',
+        'cardio' => '❤️ Cardio-training',
+        'cross_training' => '🔥 Cross-training',
+        'biking' => '🚴 Biking',
+        'yoga' => '🧘 Yoga',
+        'pilates' => '🧘‍♀️ Pilates',
+        'boxe' => '🥊 Boxe',
+        'piscine' => '🏊 Piscine',
+        'sauna' => '🧖 Sauna',
+        'hammam' => '♨️ Hammam',
+        'coaching' => '👨‍🏫 Coaching',
+        'small_group' => '👥 Small group',
+        'pole_sante' => '🏥 Pôle Santé',
+        'pole_bien_etre' => '🧘‍♂️ Pôle Bien-être',
+        'aquagym' => '🏊 Aquagym',
+        'aquabike' => '🚴 Aquabike',
+        'zumba' => '💃 Zumba',
+        'step' => '👟 Step',
+        'bodypump' => '💪 BodyPump',
+        'bodycombat' => '🥊 BodyCombat',
+        'caf' => '🍑 CAF',
+        'abdos' => '🔥 Abdos',
+        'stretching' => '🙆 Stretching',
+        'hiit' => '🔥 HIIT',
+        'trx' => '🎗️ TRX',
+        'functional' => '⚡ Functional Training',
+        'electrostim' => '⚡ Électrostimulation',
+        'kids' => '👶 Espace Kids',
+    );
+    
+    // Récupérer les activités depuis la BDD
+    if (!function_exists('mf_get_club_data')) {
+        return '💪 Musculation • ❤️ Cardio • 🏃 Cours collectifs';
+    }
+    
+    $activities_json = mf_get_club_data($club_id, 'activities', '[]');
+    $activities = json_decode($activities_json, true);
+    
+    if (!is_array($activities) || empty($activities)) {
+        return '💪 Musculation • ❤️ Cardio • 🏃 Cours collectifs';
+    }
+    
+    $formatted = array();
+    foreach ($activities as $key) {
+        if (isset($labels[$key])) {
+            $formatted[] = $labels[$key];
+        } else {
+            $formatted[] = '🏃 ' . ucfirst(str_replace('_', ' ', $key));
+        }
+    }
+    
+    if (empty($formatted)) {
+        return '💪 Musculation • ❤️ Cardio • 🏃 Cours collectifs';
+    }
+    
+    switch ($format) {
+        case 'list':
+            return "• " . implode("\n• ", $formatted);
+        case 'count':
+            return count($formatted) . ' activités';
+        case 'short':
+            if (count($formatted) > 5) {
+                return implode(' • ', array_slice($formatted, 0, 5)) . ' et +' . (count($formatted) - 5) . ' autres';
+            }
+            return implode(' • ', $formatted);
+        default:
+            return implode(' • ', $formatted);
+    }
+}
