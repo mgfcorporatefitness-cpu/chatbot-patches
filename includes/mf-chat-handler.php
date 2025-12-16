@@ -1582,8 +1582,8 @@ function mf_get_formatted_payment_methods($club_id) {
         'especes' => '💵 Espèces',
         'amex' => '💎 American Express',
         'alma' => '⏳ Alma (plusieurs fois)',
-        'cheque_vacances' => '🏖️ Chèque Vacances',
-        'ancv' => '🎾 Chèque Sport ANCV',
+        'ancv_vacances' => '🏖️ Chèque Vacances',
+        'ancv_sport' => '🎾 Chèque Sport ANCV',
         'coupon_sport' => '🎫 Coupon Sport',
         'pass_sport' => '🏃 Pass\'Sport',
     );
